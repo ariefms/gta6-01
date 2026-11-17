@@ -1,0 +1,104 @@
+// Solara Bay — tuning constants. One place for every number the game balances on.
+export const CONFIG = {
+  seed: 1337,
+  // City layout: streets every BLOCK metres, GRID streets per axis.
+  block: 40,
+  grid: 9,
+  roadWidth: 12,
+  sidewalkWidth: 3,
+  // World bounds (playable area is roughly -180..180 on both axes).
+  halfCity: 180,
+  beachZ: 190,
+  seaZ: 230,
+  // Player on foot.
+  walkSpeed: 6,
+  runSpeed: 11,
+  playerHealth: 100,
+  // Cars.
+  carAccel: 26,
+  carBrake: 40,
+  carMaxSpeed: 42,
+  carReverseMax: 12,
+  carTurn: 1.9,
+  carDrag: 0.6,
+  // Traffic.
+  trafficCars: 22,
+  pedestrians: 28,
+  trafficSpeed: 9,
+  // Wanted.
+  maxWanted: 5,
+  wantedDecaySeconds: 14,
+  policeCruisersMax: 6,
+  // Missions.
+  missionReward: [250, 400, 600, 800, 2500],
+  // Rendering.
+  fogNear: 120,
+  fogFar: 420,
+  shadowSize: 2048,
+  // Colours of the sun-soaked palette.
+  skyTop: 0x3f8fd2,
+  skyBottom: 0xffe3b3,
+  sunColor: 0xfff2d0,
+  seaColor: 0x1e7fa8,
+  sandColor: 0xe8d29a,
+  asphalt: 0x3a3f46,
+  sidewalk: 0x9aa0a3,
+  buildingPalette: [0xe8b48c, 0xd9a06b, 0xc9d6dd, 0xf2e3c6, 0xb7c4a8, 0xe39a7a, 0x8fb8c9, 0xd8c9a3],
+};
+
+// The five-mission story chain. Names, briefings and targets are all original.
+export const MISSION_DEFS = [
+  {
+    id: 1,
+    title: 'First Wheels',
+    brief: 'Dio is back in Solara Bay with empty pockets. Steal a car and drive to the yellow marker at Coral Plaza.',
+    objective: 'Steal a car, then drive to Coral Plaza',
+    target: [60, 60],
+    needsCar: true,
+  },
+  {
+    id: 2,
+    title: 'Package Run',
+    brief: 'Marisol needs a parcel across town before the harbour bell. Pick it up at the marina, deliver it to the tower — fast. Finish this and a pistol is yours.',
+    objective: 'Collect the parcel, deliver it to Solara Tower before time runs out',
+    target: [-60, -60],
+    pickup: [120, 140],
+    timeLimit: 90,
+    unlocksPistol: true,
+  },
+  {
+    id: 3,
+    title: 'Hot Pursuit',
+    brief: 'The Bay Patrol is on your tail. Lose the heat: break line of sight and stay out of trouble until the stars fade.',
+    objective: 'Lose a 3-star wanted level',
+    target: [0, 0],
+    wantedAtStart: 3,
+  },
+  {
+    id: 4,
+    title: 'Heist Prep',
+    brief: 'The big score needs gear. Collect three supply crates stashed around the city — the docks, the stadium, the old market.',
+    objective: 'Collect 3 supply crates (0/3)',
+    targets: [[-140, 140], [140, -100], [-20, 140]],
+  },
+  {
+    id: 5,
+    title: 'The Big Score',
+    brief: 'Tonight the Bay National vault opens for one hour. Reach the bank, grab the cash, and escape a 4-star chase to the safehouse.',
+    objective: 'Rob Bay National, then escape to the safehouse',
+    target: [0, -140],
+    escape: [-140, -140],
+    wantedAtStart: 4,
+  },
+];
+
+export const CAR_MODELS = [
+  { name: 'Comet Sedan', color: 0x4a7fb5, topSpeed: 38, accel: 24 },
+  { name: 'Bay Taxi', color: 0xf2c230, topSpeed: 36, accel: 23 },
+  { name: 'Harbor Truck', color: 0x7a8a99, topSpeed: 30, accel: 18 },
+  { name: 'Solaris Sport', color: 0xc23b3b, topSpeed: 48, accel: 30 },
+  { name: 'Coast Cruiser', color: 0x3fae7a, topSpeed: 40, accel: 25 },
+];
+
+export const CONTROLS_TEXT =
+  'WASD move / drive · Mouse orbit camera · Shift run · E enter or exit car · Space handbrake · F punch · Click shoot (after Mission 2) · M mute · Esc pause';
