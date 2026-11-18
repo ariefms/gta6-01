@@ -22,8 +22,8 @@ export const CONFIG = {
   carTurn: 1.9,
   carDrag: 0.6,
   // Traffic.
-  trafficCars: 22,
-  pedestrians: 28,
+  trafficCars: 26,
+  pedestrians: 34,
   trafficSpeed: 9,
   // Wanted.
   maxWanted: 5,
@@ -33,17 +33,17 @@ export const CONFIG = {
   missionReward: [250, 400, 600, 800, 2500],
   // Rendering.
   fogNear: 120,
-  fogFar: 420,
+  fogFar: 500,
   shadowSize: 2048,
   // Colours of the sun-soaked palette.
-  skyTop: 0x3f8fd2,
+  skyTop: 0xff9e5e,
   skyBottom: 0xffe3b3,
-  sunColor: 0xfff2d0,
+  sunColor: 0xffd9a0,
   seaColor: 0x1e7fa8,
   sandColor: 0xe8d29a,
   asphalt: 0x3a3f46,
   sidewalk: 0x9aa0a3,
-  buildingPalette: [0xe8b48c, 0xd9a06b, 0xc9d6dd, 0xf2e3c6, 0xb7c4a8, 0xe39a7a, 0x8fb8c9, 0xd8c9a3],
+  buildingPalette: [0xe8965a, 0xd97b4f, 0xc9d6dd, 0xf2e3c6, 0xa8b89a, 0xe05a3a, 0x7fb8c9, 0xd8b25f],
 };
 
 // The five-mission story chain. Names, briefings and targets are all original.

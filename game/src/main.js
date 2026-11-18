@@ -11,7 +11,7 @@ import { createPolice, addWanted, updatePolice } from './police.js';
 import { createMissions, startMission, advanceMission, updateMissions } from './missions.js';
 import { createHud, updateHud, showStartMenu, showPauseMenu, showEndScreen, hideMenu, flashCenter } from './hud.js';
 import { AudioEngine } from './audio.js';
-import { applyShot } from './shots.js';
+import { applyShot, keepPursuitInFrame } from './shots.js';
 import { CAR_MODELS } from './config.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -56,6 +56,9 @@ const game = {
   cameraPitch: 0.32,
   gameMinutes: 12 * 60,
   vistaMode: false,
+  shotAutoDrive: false,
+  shotChase: false,
+  cameraDist: 13,
   shotName,
   step,
 };
@@ -297,14 +300,16 @@ function updateCamera(dt) {
   }
   // Camera follows behind the heading, blended with the orbit drag.
   const followYaw = game.playerCar ? targetYaw : game.cameraYaw;
-  const dist = game.playerCar ? 13 : 9;
+  const dist = game.playerCar ? game.cameraDist : 9;
   const height = 4.5 + game.cameraPitch * 4;
   const cx = targetX - Math.sin(followYaw) * dist;
   const cz = targetZ - Math.cos(followYaw) * dist;
   camera.position.x += (cx - camera.position.x) * Math.min(1, dt * 5);
   camera.position.y += (height - camera.position.y) * Math.min(1, dt * 5);
   camera.position.z += (cz - camera.position.z) * Math.min(1, dt * 5);
-  camera.lookAt(targetX, 2, targetZ);
+  // Mission shot looks up so the tall beacon and tower stay in frame:
+  // the default lookAt (y=2) puts anything above ~15 deg off-screen.
+  camera.lookAt(targetX, game.shotLookUp ? 6 : 2, targetZ);
 }
 
 const clock = new THREE.Clock();
@@ -313,13 +318,21 @@ function loop() {
   const dt = Math.min(0.05, clock.getDelta());
   if (game.mode === 'play') {
     if (game.playerCar) {
-      driveCar(game.playerCar, input, dt, world.colliders);
+      // Screenshot states drive for real: hold the accelerator down so the
+      // car is at speed when the frame is taken.
+      const drive = game.shotAutoDrive
+        ? { forward: true, back: false, left: false, right: false, run: false, handbrake: false }
+        : input;
+      driveCar(game.playerCar, drive, dt, world.colliders);
       player.x = game.playerCar.x;
       player.z = game.playerCar.z;
     } else {
       walkPlayer(player, input, game.cameraYaw, dt, world.colliders);
     }
     step(dt);
+    // Chase staging: keep the cruisers glued behind the player so the
+    // pursuit stays in frame for the whole screenshot.
+    if (game.shotChase) keepPursuitInFrame(game);
   } else if (game.mode === 'menu' && game.vistaMode) {
     // Slow orbit around the tower behind the start screen.
     const t = performance.now() / 1000;
