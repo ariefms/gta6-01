@@ -1,36 +1,39 @@
 // Solara Bay — make.fun entrypoint (program/v1).
-// Copies game/ and screenshots/ from this repository into the output
-// directory and writes /output/dossier.json with buildDossier from
-// ./vendor/makefun-game.ts. Node 22, standard library only, deterministic.
+// Hands the game in: copies game/ and screenshots/ from this repository
+// into the output directory and writes /output/dossier.json with
+// buildDossier from ./vendor/makefun-game.ts. Node 22, standard library
+// only, fully deterministic — two runs write identical bytes.
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-game.ts';
 
-const repoRoot = dirname(fileURLToPath(import.meta.url));
-const outputDir = resolve(process.env.MAKEFUN_OUTPUT_DIR || '/output');
+const here = dirname(fileURLToPath(import.meta.url));
+const outDir = resolve(process.env.MAKEFUN_OUTPUT_DIR ?? '/output');
 
-function copyTree(sourceDir: string, targetDir: string): void {
-  if (!existsSync(sourceDir)) return;
-  mkdirSync(targetDir, { recursive: true });
-  cpSync(sourceDir, targetDir, { recursive: true, dereference: false });
+const CAPS = {
+  text_max_bytes: 163840,
+  screenshots: { max: 4, max_bytes: 262144 },
+  game_max_files: 993,
+  game_max_bytes: 50331648,
+};
+
+function mirrorDir(from: string, to: string): void {
+  if (!existsSync(from)) return;
+  mkdirSync(to, { recursive: true });
+  cpSync(from, to, { recursive: true, dereference: false });
 }
 
-function main(): void {
-  mkdirSync(outputDir, { recursive: true });
-  const gameOut = join(outputDir, 'game');
-  const shotsOut = join(outputDir, 'screenshots');
-  rmSync(gameOut, { recursive: true, force: true });
-  rmSync(shotsOut, { recursive: true, force: true });
-  copyTree(join(repoRoot, 'game'), gameOut);
-  copyTree(join(repoRoot, 'screenshots'), shotsOut);
-  const dossier = buildDossier(outputDir, {
-    text_max_bytes: 163840,
-    screenshots: { max: 4, max_bytes: 262144 },
-    game_max_files: 993,
-    game_max_bytes: 50331648,
-  });
-  writeFileSync(join(outputDir, 'dossier.json'), dossier);
+function handIn(): void {
+  mkdirSync(outDir, { recursive: true });
+  const gameDir = join(outDir, 'game');
+  const shotsDir = join(outDir, 'screenshots');
+  rmSync(gameDir, { recursive: true, force: true });
+  rmSync(shotsDir, { recursive: true, force: true });
+  mirrorDir(join(here, 'game'), gameDir);
+  mirrorDir(join(here, 'screenshots'), shotsDir);
+  const dossier = buildDossier(outDir, CAPS);
+  writeFileSync(join(outDir, 'dossier.json'), dossier);
 }
 
-main();
+handIn();

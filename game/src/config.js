@@ -1,52 +1,64 @@
-// Solara Bay — tuning constants. One place for every number the game balances on.
+// Solara Bay — every tuning number in one place. Golden-hour edition:
+// low warm sun, long shadows, saturated facades, busier streets.
 export const CONFIG = {
   seed: 1337,
-  // City layout: streets every BLOCK metres, GRID streets per axis.
+
+  // City grid: a street every BLOCK metres, GRID streets on each axis.
   block: 40,
   grid: 9,
   roadWidth: 12,
   sidewalkWidth: 3,
-  // World bounds (playable area is roughly -180..180 on both axes).
+
+  // Playable bounds and the coast.
   halfCity: 180,
   beachZ: 190,
   seaZ: 230,
-  // Player on foot.
+
+  // Dio on foot.
   walkSpeed: 6,
   runSpeed: 11,
   playerHealth: 100,
-  // Cars.
+
+  // Arcade car feel.
   carAccel: 26,
   carBrake: 40,
   carMaxSpeed: 42,
   carReverseMax: 12,
   carTurn: 1.9,
   carDrag: 0.6,
-  // Traffic.
-  trafficCars: 22,
-  pedestrians: 28,
+
+  // Street life — a little busier than v1 so the frames read full.
+  trafficCars: 26,
+  pedestrians: 34,
   trafficSpeed: 9,
-  // Wanted.
+
+  // Wanted level.
   maxWanted: 5,
   wantedDecaySeconds: 14,
   policeCruisersMax: 6,
-  // Missions.
+
+  // Cash per mission, in story order.
   missionReward: [250, 400, 600, 800, 2500],
-  // Rendering.
+
+  // Golden-hour rendering: warm haze, far fog so the city never washes out.
   fogNear: 120,
-  fogFar: 420,
+  fogFar: 500,
   shadowSize: 2048,
-  // Colours of the sun-soaked palette.
-  skyTop: 0x3f8fd2,
+
+  // Golden-hour palette.
+  skyTop: 0xff9e5e,
   skyBottom: 0xffe3b3,
-  sunColor: 0xfff2d0,
+  sunColor: 0xffd9a0,
   seaColor: 0x1e7fa8,
   sandColor: 0xe8d29a,
   asphalt: 0x3a3f46,
   sidewalk: 0x9aa0a3,
-  buildingPalette: [0xe8b48c, 0xd9a06b, 0xc9d6dd, 0xf2e3c6, 0xb7c4a8, 0xe39a7a, 0x8fb8c9, 0xd8c9a3],
+
+  // Saturated facades: terracotta, coral, sand, teal, cream, sunset.
+  buildingPalette: [0xe07840, 0xd94f30, 0xe8b48c, 0x2e8f8a, 0xf2e3c6, 0xc25a7a, 0x4a7fb5, 0xd8a03c],
 };
 
-// The five-mission story chain. Names, briefings and targets are all original.
+// The five-mission story chain. All names, briefings and targets are original.
 export const MISSION_DEFS = [
   {
     id: 1,
@@ -92,6 +104,7 @@ export const MISSION_DEFS = [
   },
 ];
 
+// Car models. Colours and top speeds are what make each one read on screen.
 export const CAR_MODELS = [
   { name: 'Comet Sedan', color: 0x4a7fb5, topSpeed: 38, accel: 24 },
   { name: 'Bay Taxi', color: 0xf2c230, topSpeed: 36, accel: 23 },
