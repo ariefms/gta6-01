@@ -30,7 +30,7 @@ export function createHud() {
     #hud-clock { font-size: 18px; }
     #hud-health { position: absolute; top: 16px; left: 16px; width: 220px; height: 16px; background: rgba(0,0,0,.55); border: 2px solid #fff; }
     #hud-health-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #37d67a, #a8f0c0); }
-    #hud-objective { position: absolute; top: 44px; left: 16px; max-width: 420px; font-size: 17px; font-weight: bold; text-shadow: 0 2px 4px #000; }
+    #hud-objective { position: absolute; top: 44px; left: 16px; max-width: 420px; font-size: 20px; font-weight: bold; text-shadow: 0 2px 4px #000; }
     #hud-speed { position: absolute; bottom: 18px; right: 210px; font-size: 26px; font-weight: bold; text-shadow: 0 2px 4px #000; }
     #hud-hint { position: absolute; bottom: 18px; left: 16px; font-size: 13px; opacity: .85; text-shadow: 0 1px 3px #000; }
     #minimap { position: absolute; top: 14px; right: 14px; border: 3px solid rgba(255,255,255,.85); border-radius: 50%; background: #1d2b33; box-shadow: 0 2px 10px rgba(0,0,0,.5); }

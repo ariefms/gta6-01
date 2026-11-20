@@ -1,8 +1,11 @@
 // Solara Bay — boot, game loop, input, camera, enter/exit, combat, save/load.
 // Wires every module together: world, player, vehicles, traffic, police,
-// missions, HUD, audio and the ?shot= screenshot states.
+// missions, HUD, audio and the ?shot= screenshot states. The screenshot
+// states get three extra hooks: shotAutoDrive (the car drives itself while
+// a shot renders), shotChase (cruisers are rubber-banded into frame) and
+// fixedCam (a pinned cinematic camera for the mission shot).
 import * as THREE from 'three';
-import { CONFIG } from './config.js';
+import { CONFIG, CAR_MODELS } from './config.js';
 import { buildWorld } from './world.js';
 import { createPlayer, walkPlayer, punch } from './player.js';
 import { createCar, driveCar, nearestCar } from './vehicles.js';
@@ -11,13 +14,13 @@ import { createPolice, addWanted, updatePolice } from './police.js';
 import { createMissions, startMission, advanceMission, updateMissions } from './missions.js';
 import { createHud, updateHud, showStartMenu, showPauseMenu, showEndScreen, hideMenu, flashCenter } from './hud.js';
 import { AudioEngine } from './audio.js';
-import { applyShot } from './shots.js';
-import { CAR_MODELS } from './config.js';
+import { applyShot, holdPursuitInFrame } from './shots.js';
 
-const params = new URLSearchParams(window.location.search);
-const shotName = params.get('shot');
+const query = new URLSearchParams(window.location.search);
+const shotName = query.get('shot');
 const isShot = shotName !== null;
 
+// Renderer, scene, camera.
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
@@ -28,6 +31,7 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 900);
 camera.position.set(40, 55, -90);
 
+// World and actors.
 const world = buildWorld(scene);
 const player = createPlayer(scene);
 const traffic = createTraffic(scene, world.streets);
@@ -36,7 +40,7 @@ const missions = createMissions(scene);
 const hud = createHud();
 const audio = new AudioEngine();
 
-// Parked cars the player can steal, scattered near road corners.
+// Parked cars Dio can steal, scattered near road corners.
 const parkedCars = [];
 const parkedSpots = [
   [24, 24, 0, 0], [-36, 44, Math.PI / 2, 1], [44, -36, -Math.PI / 2, 2],
@@ -47,6 +51,7 @@ for (const [x, z, yaw, mi] of parkedSpots) {
   parkedCars.push(createCar(scene, CAR_MODELS[mi], x, z, yaw));
 }
 
+// The shared state object every module reads and writes.
 const game = {
   scene, camera, renderer, world, player, traffic, police, missions, hud, audio,
   parkedCars, streets: world.streets,
@@ -54,17 +59,22 @@ const game = {
   mode: 'menu',
   cameraYaw: 0,
   cameraPitch: 0.32,
+  camDistance: 13,
   gameMinutes: 12 * 60,
   vistaMode: false,
   shotName,
+  // Screenshot hooks, set by applyShot; all idle during normal play.
+  shotAutoDrive: false,
+  shotChase: false,
+  fixedCam: null,
   step,
 };
 
+// Keyboard state. Mouse drag orbits the camera; a still click shoots.
 const input = {
   forward: false, back: false, left: false, right: false,
   run: false, handbrake: false,
 };
-
 const KEYMAP = {
   KeyW: 'forward', ArrowUp: 'forward',
   KeyS: 'back', ArrowDown: 'back',
@@ -92,7 +102,6 @@ window.addEventListener('keyup', (e) => {
   if (action) input[action] = false;
 });
 
-// Mouse drag orbits the camera; click shoots when Dio has the pistol.
 let dragging = false;
 let lastX = 0;
 let lastY = 0;
@@ -143,7 +152,7 @@ function onEscape() {
 function onEnterExitCar() {
   if (game.mode !== 'play') return;
   if (game.playerCar) {
-    // Get out beside the car.
+    // Step out beside the car.
     const car = game.playerCar;
     game.playerCar = null;
     player.x = car.x + Math.sin(car.yaw + Math.PI / 2) * 2.5;
@@ -277,12 +286,18 @@ function step(dt) {
   audio.setEngine(speedRatio, !!game.playerCar);
   audio.siren(police.wanted > 0);
   updateHud(hud, game);
-  // Mission beacon spins so it reads at a glance.
+  // The mission beacon spins so it reads at a glance.
   if (missions.beacon.visible) missions.beacon.rotation.y += dt * 0.8;
 }
 
 function updateCamera(dt) {
-  if (game.vistaMode) return; // start shot keeps its fixed vista
+  if (game.fixedCam) {
+    // A screenshot state pinned the camera: hold the exact framing.
+    camera.position.set(game.fixedCam.pos[0], game.fixedCam.pos[1], game.fixedCam.pos[2]);
+    camera.lookAt(game.fixedCam.look[0], game.fixedCam.look[1], game.fixedCam.look[2]);
+    return;
+  }
+  if (game.vistaMode) return; // the start shot keeps its own vista
   let targetX;
   let targetZ;
   let targetYaw;
@@ -295,9 +310,9 @@ function updateCamera(dt) {
     targetZ = player.z;
     targetYaw = player.yaw;
   }
-  // Camera follows behind the heading, blended with the orbit drag.
+  // Chase camera follows behind the heading, blended with the orbit drag.
   const followYaw = game.playerCar ? targetYaw : game.cameraYaw;
-  const dist = game.playerCar ? 13 : 9;
+  const dist = game.playerCar ? game.camDistance : 9;
   const height = 4.5 + game.cameraPitch * 4;
   const cx = targetX - Math.sin(followYaw) * dist;
   const cz = targetZ - Math.cos(followYaw) * dist;
@@ -312,6 +327,8 @@ function loop() {
   requestAnimationFrame(loop);
   const dt = Math.min(0.05, clock.getDelta());
   if (game.mode === 'play') {
+    // Screenshot states drive themselves: full throttle, no steering.
+    if (game.shotAutoDrive) input.forward = true;
     if (game.playerCar) {
       driveCar(game.playerCar, input, dt, world.colliders);
       player.x = game.playerCar.x;
@@ -320,6 +337,8 @@ function loop() {
       walkPlayer(player, input, game.cameraYaw, dt, world.colliders);
     }
     step(dt);
+    // Chase shots keep the cruisers glued into the frame behind Dio.
+    if (game.shotChase) holdPursuitInFrame(game);
   } else if (game.mode === 'menu' && game.vistaMode) {
     // Slow orbit around the tower behind the start screen.
     const t = performance.now() / 1000;
